@@ -34,7 +34,7 @@
 
         .app-wrapper {
             width: 100%;
-            max-width: 900px;
+            max-width: 1000px;
             display: none; 
             flex-direction: column;
             gap: 15px;
@@ -59,12 +59,11 @@
         }
 
         .user-bar { background: #000; border: var(--border-pixel); padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* TRACKER TAB */
         .dashboard { background: var(--panel-color); border: var(--border-pixel); box-shadow: var(--shadow-pixel); padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .stat-card { border: 2px solid var(--accent); padding: 10px; background: rgba(0, 0, 0, 0.3); text-align: center; }
         .stat-value { font-size: 2.5rem; color: var(--accent); display: block; }
-
-        .main-card { background: var(--panel-color); border: var(--border-pixel); box-shadow: var(--shadow-pixel); padding: 25px; text-align: center; }
-        .timer-display { font-size: 6rem; color: var(--primary); text-shadow: 4px 4px 0px #004d1a; margin: 10px 0; }
 
         .pixel-btn {
             font-family: 'VT323', monospace; font-size: 1.4rem; padding: 8px 15px; cursor: pointer;
@@ -75,21 +74,39 @@
         .btn-secondary { background: var(--secondary); color: #fff; }
         .btn-accent { background: var(--accent); }
 
-        .tasks-view { display: none; grid-template-columns: 200px 1fr; gap: 15px; min-height: 500px; }
-        .tasks-sidebar { background: #000; border: var(--border-pixel); padding: 10px; }
-        .list-item { padding: 8px; cursor: pointer; border: 1px solid transparent; margin-bottom: 5px; }
-        .list-item.active { border: 1px solid var(--primary); color: var(--primary); }
+        /* TASKS VIEW */
+        .tasks-view { display: none; grid-template-columns: 240px 1fr; gap: 15px; min-height: 550px; }
+        .tasks-sidebar { background: #000; border: var(--border-pixel); padding: 10px; display: flex; flex-direction: column; }
+        
+        .sidebar-scroll { flex: 1; overflow-y: auto; margin-bottom: 10px; }
+        .list-item { padding: 8px; cursor: pointer; border: 1px solid transparent; margin-bottom: 5px; display: flex; justify-content: space-between; }
+        .list-item.active { border: 1px solid var(--primary); color: var(--primary); background: rgba(0, 255, 65, 0.1); }
+        .list-item:hover:not(.active) { background: #111; }
 
         .tasks-content { background: var(--panel-color); border: var(--border-pixel); box-shadow: var(--shadow-pixel); padding: 20px; display: flex; flex-direction: column; gap: 15px; }
         .task-input-area { display: flex; gap: 10px; border-bottom: 2px solid #000; padding-bottom: 15px; }
+        
         .task-list { list-style: none; padding: 0; margin: 0; overflow-y: auto; max-height: 400px; }
-        .task-item { display: flex; align-items: flex-start; gap: 12px; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .task-checkbox { width: 20px; height: 20px; border: 2px solid var(--accent); cursor: pointer; display: flex; align-items: center; justify-content: center; margin-top: 4px; }
+        .task-item { 
+            display: flex; align-items: center; gap: 12px; padding: 12px; 
+            border-bottom: 1px solid rgba(255,255,255,0.05); 
+            transition: background 0.2s;
+        }
+        .task-item.active-task { background: rgba(0, 255, 65, 0.05); border-left: 4px solid var(--primary); }
+
+        .task-checkbox { width: 22px; height: 22px; border: 2px solid var(--accent); cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
         .task-checkbox.checked::after { content: "X"; color: var(--primary); font-weight: bold; }
-        .task-body { flex: 1; }
-        .task-title { font-size: 1.4rem; }
+        
+        .task-body { flex: 1; min-width: 0; }
+        .task-title { font-size: 1.4rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .task-title.completed { text-decoration: line-through; color: #555; }
         .task-notes { font-size: 0.9rem; color: #888; }
+
+        /* Task Timer UI */
+        .task-timer-controls { display: flex; align-items: center; gap: 10px; }
+        .running-time { font-family: monospace; color: var(--primary); font-size: 1.2rem; min-width: 80px; text-align: right; }
+        
+        .small-btn { padding: 4px 8px; font-size: 0.9rem; }
 
         .history-section { background: var(--panel-color); border: var(--border-pixel); box-shadow: var(--shadow-pixel); max-height: 250px; overflow-y: auto; }
         .history-item { padding: 10px 15px; border-bottom: 2px solid #000; display: flex; justify-content: space-between; align-items: center; }
@@ -101,13 +118,12 @@
         }
 
         .setup-warning {
-            color: var(--secondary);
-            font-size: 1.2rem;
-            margin-top: 20px;
-            border: 1px dashed var(--secondary);
-            padding: 15px;
-            background: rgba(0,0,0,0.5);
+            color: var(--secondary); font-size: 1.2rem; margin-top: 20px; border: 1px dashed var(--secondary); padding: 15px; background: rgba(0,0,0,0.5);
         }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: var(--accent); }
     </style>
 </head>
 <body>
@@ -120,6 +136,7 @@
     </div>
 </div>
 
+<!-- Login -->
 <div id="authScreen" class="auth-container" style="display: none;">
     <div style="font-size: 2.5rem; text-align: center; color: var(--primary);">PIXEL LOGIN</div>
     <input type="email" id="email" class="input-field" placeholder="E-MAIL">
@@ -132,23 +149,26 @@
 </div>
 
 <div id="appScreen" class="app-wrapper">
+    <!-- User Bar -->
     <div class="user-bar">
         <div>USUÁRIO: <span id="userEmail" style="color: var(--accent)">...</span></div>
         <button class="pixel-btn" style="font-size: 0.8rem; padding: 4px 8px;" onclick="handleLogout()">LOGOUT</button>
     </div>
 
+    <!-- Tabs -->
     <div class="nav-tabs">
         <button id="tabTracker" class="nav-btn active" onclick="switchTab('tracker')">CRONÔMETRO</button>
         <button id="tabTasks" class="nav-btn" onclick="switchTab('tasks')">TAREFAS</button>
     </div>
 
+    <!-- View: Cronômetro Geral -->
     <div id="viewTracker" class="view-content">
         <div class="dashboard">
             <div class="stat-card"><span>ARTES (MÊS)</span><span class="stat-value" id="monthArts">0</span></div>
             <div class="stat-card"><span>HORAS (MÊS)</span><span class="stat-value" id="monthHours">0.0h</span></div>
         </div>
         <div class="main-card">
-            <input type="text" id="taskName" class="input-field" placeholder="> NOME DA ARTE..." style="margin-bottom: 15px;">
+            <input type="text" id="taskName" class="input-field" placeholder="> NOME DO TRABALHO GERAL..." style="margin-bottom: 15px;">
             <div class="timer-display" id="display">00:00:00</div>
             <div style="display: flex; gap: 15px; justify-content: center;">
                 <button class="pixel-btn btn-primary" id="startBtn">INICIAR</button>
@@ -163,21 +183,29 @@
         </div>
     </div>
 
+    <!-- View: Tarefas Integradas -->
     <div id="viewTasks" class="tasks-view">
         <div class="tasks-sidebar">
             <div style="font-size: 1.2rem; color: var(--accent); margin-bottom: 10px;">LISTAS</div>
-            <div class="list-item active">Minhas tarefas</div>
-            <div class="list-item">Digital Gráfica</div>
-            <div class="list-item">Financeiro</div>
+            <div class="sidebar-scroll" id="listContainer">
+                <!-- Listas dinâmicas aqui -->
+            </div>
+            <button class="pixel-btn btn-accent" style="width: 100%; font-size: 0.9rem;" onclick="createNewList()">+ NOVA LISTA</button>
         </div>
+
         <div class="tasks-content">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 id="currentListName" style="margin: 0; color: var(--primary);">MINHAS TAREFAS</h2>
+            </div>
+            
             <div class="task-input-area">
                 <div style="flex: 1;">
-                    <input type="text" id="newTaskTitle" class="input-field" placeholder="+ Adicionar uma tarefa">
+                    <input type="text" id="newTaskTitle" class="input-field" placeholder="+ Adicionar uma tarefa nesta lista">
                     <input type="text" id="newTaskNotes" class="input-field" style="font-size: 0.8rem; margin-top: 5px; border-color: #333;" placeholder="Notas/Detalhes...">
                 </div>
-                <button class="pixel-btn btn-primary" onclick="addTask()">ADD</button>
+                <button class="pixel-btn btn-primary" id="addTaskBtn">ADD</button>
             </div>
+            
             <ul id="taskList" class="task-list"></ul>
         </div>
     </div>
@@ -186,70 +214,55 @@
 <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-    // INSIRA SUAS CHAVES DO SUPABASE AQUI
     const SUPABASE_URL = ''; 
     const SUPABASE_KEY = ''; 
 
     let supabase = null;
-
-    // Inicialização protegida para evitar erro de execução caso as chaves estejam vazias
     if (SUPABASE_URL && SUPABASE_KEY) {
-        try {
-            supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-        } catch (err) {
-            console.error("Erro ao inicializar Supabase:", err);
-        }
-    } else {
-        console.warn("Chaves do Supabase não configuradas.");
+        supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
     }
 
+    // State
     let sessionUser = null;
+    let historyData = [];
+    let tasksData = [];
+    let listsData = ['Minhas tarefas', 'Digital Gráfica', 'Financeiro']; // Default
+    let currentActiveList = 'Minhas tarefas';
+
+    // Timer Global State (pode ser "adotado" por uma tarefa ou pelo tracker geral)
     let startTime = 0;
     let accumulatedTime = 0;
     let isRunning = false;
     let timerInterval = null;
-    let historyData = [];
-    let tasksData = [];
+    let activeTaskId = null; // ID da tarefa que está rodando o cronômetro
 
     async function init() {
-        if (!supabase) {
-            document.getElementById('setupError').style.display = 'block';
-            return;
-        }
-
-        try {
-            const { data: { session } } = await supabase.auth.getSession();
-            updateAuthUI(session?.user || null);
-            document.getElementById('loadingOverlay').style.display = 'none';
-        } catch (err) {
-            console.error("Erro na inicialização da sessão:", err);
-            document.getElementById('loadingOverlay').innerText = "ERRO DE CONEXÃO COM SUPABASE";
-        }
+        if (!supabase) { document.getElementById('setupError').style.display = 'block'; return; }
+        const { data: { session } } = await supabase.auth.getSession();
+        updateAuthUI(session?.user || null);
+        document.getElementById('loadingOverlay').style.display = 'none';
     }
 
+    // Auth
     window.handleSignIn = async () => {
-        if (!supabase) return;
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: document.getElementById('email').value,
+            password: document.getElementById('password').value
+        });
         if (error) document.getElementById('authMsg').innerText = error.message;
         else updateAuthUI(data.user);
     };
 
     window.handleSignUp = async () => {
-        if (!supabase) return;
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        const { error } = await supabase.auth.signUp({ email, password });
+        const { error } = await supabase.auth.signUp({
+            email: document.getElementById('email').value,
+            password: document.getElementById('password').value
+        });
         if (error) document.getElementById('authMsg').innerText = error.message;
         else document.getElementById('authMsg').innerText = "Confirme seu e-mail!";
     };
 
-    window.handleLogout = async () => { 
-        if (!supabase) return;
-        await supabase.auth.signOut(); 
-        updateAuthUI(null); 
-    };
+    window.handleLogout = async () => { await supabase.auth.signOut(); updateAuthUI(null); };
 
     function updateAuthUI(user) {
         sessionUser = user;
@@ -264,14 +277,29 @@
         }
     }
 
+    // Data Fetch
     async function fetchData() {
         if (!supabase || !sessionUser) return;
-        const hRes = await supabase.from('history').select('*').order('timestamp', { ascending: false });
-        if (!hRes.error) { historyData = hRes.data; renderHistory(); updateDashboard(); }
-        const tRes = await supabase.from('tasks').select('*').order('timestamp', { ascending: false });
-        if (!tRes.error) { tasksData = tRes.data; renderTasks(); }
+        
+        // Fetch History
+        const { data: hData } = await supabase.from('history').select('*').order('timestamp', { ascending: false });
+        historyData = hData || [];
+        
+        // Fetch Tasks
+        const { data: tData } = await supabase.from('tasks').select('*').order('timestamp', { ascending: false });
+        tasksData = tData || [];
+
+        // Extrair listas únicas das tarefas ou manter as padrões
+        const existingLists = [...new Set(tasksData.map(t => t.list_name))];
+        listsData = [...new Set([...listsData, ...existingLists])];
+
+        renderLists();
+        renderTasks();
+        renderHistory();
+        updateDashboard();
     }
 
+    // Navegação
     window.switchTab = (tab) => {
         document.getElementById('viewTracker').style.display = tab === 'tracker' ? 'block' : 'none';
         document.getElementById('viewTasks').style.display = tab === 'tasks' ? 'grid' : 'none';
@@ -279,74 +307,220 @@
         document.getElementById('tabTasks').classList.toggle('active', tab === 'tasks');
     };
 
-    window.addTask = async () => {
-        if (!supabase) return;
-        const title = document.getElementById('newTaskTitle').value;
-        const notes = document.getElementById('newTaskNotes').value;
-        if (!title) return;
-        const { error } = await supabase.from('tasks').insert([{ user_id: sessionUser.id, title, notes }]);
-        if (!error) { document.getElementById('newTaskTitle').value = ""; document.getElementById('newTaskNotes').value = ""; fetchData(); }
-    };
-
-    window.toggleTask = async (id, status) => {
-        if (!supabase) return;
-        await supabase.from('tasks').update({ is_completed: !status }).eq('id', id); fetchData();
-    };
-
-    window.deleteTask = async (id) => {
-        if (!supabase) return;
-        if (confirm("Deletar tarefa?")) { await supabase.from('tasks').delete().eq('id', id); fetchData(); }
-    };
-
-    function renderTasks() {
-        document.getElementById('taskList').innerHTML = tasksData.map(t => `
-            <li class="task-item">
-                <div class="task-checkbox ${t.is_completed ? 'checked' : ''}" onclick="toggleTask('${t.id}', ${t.is_completed})"></div>
-                <div class="task-body">
-                    <div class="task-title ${t.is_completed ? 'completed' : ''}">${t.title}</div>
-                    ${t.notes ? `<div class="task-notes">${t.notes}</div>` : ''}
-                </div>
-                <button onclick="deleteTask('${t.id}')" style="background:none; border:none; color:var(--secondary); cursor:pointer; font-family:'VT323';">EXCLUIR</button>
-            </li>
-        `).join('');
-    }
-
-    function updateDisplay() {
-        const totalMs = isRunning ? (accumulatedTime + (Date.now() - startTime)) : accumulatedTime;
-        const sec = Math.floor(totalMs / 1000);
-        const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
-        document.getElementById('display').innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-    }
-
-    document.getElementById('startBtn').onclick = () => {
-        if (!isRunning) { isRunning = true; startTime = Date.now(); document.getElementById('startBtn').innerText = "PAUSAR"; timerInterval = setInterval(updateDisplay, 100); }
-        else { isRunning = false; accumulatedTime += (Date.now() - startTime); clearInterval(timerInterval); document.getElementById('startBtn').innerText = "CONTINUAR"; }
-    };
-
-    document.getElementById('finishBtn').onclick = async () => {
-        if (!supabase) return;
-        const totalMs = isRunning ? (accumulatedTime + (Date.now() - startTime)) : accumulatedTime;
-        const totalSec = Math.floor(totalMs / 1000);
-        if (totalSec < 5) return;
-        await supabase.from('history').insert([{ user_id: sessionUser.id, name: document.getElementById('taskName').value || "PROJETO", duration_text: document.getElementById('display').innerText, raw_seconds: totalSec }]);
-        accumulatedTime = 0; isRunning = false; clearInterval(timerInterval);
-        document.getElementById('taskName').value = ""; updateDisplay(); document.getElementById('startBtn').innerText = "INICIAR"; fetchData();
-    };
-
-    document.getElementById('resetBtn').onclick = () => { accumulatedTime = 0; isRunning = false; clearInterval(timerInterval); updateDisplay(); document.getElementById('startBtn').innerText = "INICIAR"; };
-
-    function renderHistory() {
-        document.getElementById('historyList').innerHTML = historyData.map(item => `
-            <div class="history-item">
-                <div><div style="color: var(--accent)">${item.name}</div><div style="font-size: 0.8rem; color: #555">${new Date(item.timestamp).toLocaleDateString()}</div></div>
-                <span style="color: var(--primary)">${item.duration_text}</span>
+    // --- LISTAS ---
+    function renderLists() {
+        const container = document.getElementById('listContainer');
+        container.innerHTML = listsData.map(name => `
+            <div class="list-item ${currentActiveList === name ? 'active' : ''}" onclick="selectList('${name}')">
+                <span>${name}</span>
             </div>
         `).join('');
     }
 
+    window.selectList = (name) => {
+        currentActiveList = name;
+        document.getElementById('currentListName').innerText = name.toUpperCase();
+        renderLists();
+        renderTasks();
+    };
+
+    window.createNewList = () => {
+        const name = prompt("Digite o nome da nova lista:");
+        if (name && !listsData.includes(name)) {
+            listsData.push(name);
+            selectList(name);
+        }
+    };
+
+    // --- TAREFAS ---
+    document.getElementById('addTaskBtn').onclick = async () => {
+        const title = document.getElementById('newTaskTitle').value;
+        const notes = document.getElementById('newTaskNotes').value;
+        if (!title || !supabase) return;
+
+        const { error } = await supabase.from('tasks').insert([{
+            user_id: sessionUser.id,
+            title,
+            notes,
+            list_name: currentActiveList
+        }]);
+
+        if (!error) {
+            document.getElementById('newTaskTitle').value = "";
+            document.getElementById('newTaskNotes').value = "";
+            fetchData();
+        }
+    };
+
+    window.toggleTaskStatus = async (id, status) => {
+        await supabase.from('tasks').update({ is_completed: !status }).eq('id', id);
+        fetchData();
+    };
+
+    window.deleteTask = async (id) => {
+        if (confirm("Deletar tarefa permanentemente?")) {
+            await supabase.from('tasks').delete().eq('id', id);
+            if (activeTaskId === id) resetGlobalTimer();
+            fetchData();
+        }
+    };
+
+    function renderTasks() {
+        const listEl = document.getElementById('taskList');
+        const filtered = tasksData.filter(t => t.list_name === currentActiveList);
+        
+        listEl.innerHTML = filtered.map(t => {
+            const isThisTaskRunning = activeTaskId === t.id && isRunning;
+            return `
+            <li class="task-item ${activeTaskId === t.id ? 'active-task' : ''}">
+                <div class="task-checkbox ${t.is_completed ? 'checked' : ''}" onclick="toggleTaskStatus('${t.id}', ${t.is_completed})"></div>
+                <div class="task-body">
+                    <div class="task-title ${t.is_completed ? 'completed' : ''}">${t.title}</div>
+                    ${t.notes ? `<div class="task-notes">${t.notes}</div>` : ''}
+                </div>
+                
+                <div class="task-timer-controls">
+                    ${activeTaskId === t.id ? `<span class="running-time" id="task-timer-${t.id}">00:00:00</span>` : ''}
+                    
+                    ${!isThisTaskRunning ? 
+                        `<button class="pixel-btn small-btn btn-primary" onclick="startTaskTimer('${t.id}')">INICIAR</button>` : 
+                        `<button class="pixel-btn small-btn btn-accent" onclick="finishTaskTimer('${t.id}', '${t.title}')">SALVAR</button>`
+                    }
+                    <button class="pixel-btn small-btn btn-secondary" onclick="deleteTask('${t.id}')">X</button>
+                </div>
+            </li>
+        `}).join('');
+        
+        if (isRunning) updateDisplay(); // Força atualização do texto se estiver rodando
+    }
+
+    // --- CRONÔMETRO LÓGICA ---
+    
+    function formatTime(ms) {
+        const secTotal = Math.floor(ms / 1000);
+        const h = Math.floor(secTotal / 3600);
+        const m = Math.floor((secTotal % 3600) / 60);
+        const s = secTotal % 60;
+        return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    }
+
+    function updateDisplay() {
+        const totalMs = isRunning ? (accumulatedTime + (Date.now() - startTime)) : accumulatedTime;
+        const timeStr = formatTime(totalMs);
+        
+        // Atualiza display do Tracker Geral
+        const mainDisplay = document.getElementById('display');
+        if (mainDisplay) mainDisplay.innerText = timeStr;
+
+        // Atualiza display da tarefa ativa, se houver
+        if (activeTaskId) {
+            const taskTimer = document.getElementById(`task-timer-${activeTaskId}`);
+            if (taskTimer) taskTimer.innerText = timeStr;
+        }
+    }
+
+    function resetGlobalTimer() {
+        clearInterval(timerInterval);
+        isRunning = false;
+        accumulatedTime = 0;
+        activeTaskId = null;
+        updateDisplay();
+        document.getElementById('startBtn').innerText = "INICIAR";
+    }
+
+    // Cronômetro do Tracker Geral
+    document.getElementById('startBtn').onclick = () => {
+        if (activeTaskId) {
+            if (!confirm("Uma tarefa já está sendo cronometrada. Deseja parar e usar o tracker geral?")) return;
+            resetGlobalTimer();
+        }
+
+        if (!isRunning) {
+            isRunning = true;
+            startTime = Date.now();
+            document.getElementById('startBtn').innerText = "PAUSAR";
+            timerInterval = setInterval(updateDisplay, 100);
+        } else {
+            isRunning = false;
+            accumulatedTime += (Date.now() - startTime);
+            clearInterval(timerInterval);
+            document.getElementById('startBtn').innerText = "CONTINUAR";
+        }
+    };
+
+    document.getElementById('finishBtn').onclick = async () => {
+        const totalMs = isRunning ? (accumulatedTime + (Date.now() - startTime)) : accumulatedTime;
+        const totalSec = Math.floor(totalMs / 1000);
+        if (totalSec < 5) return;
+
+        const name = document.getElementById('taskName').value || "TRABALHO GERAL";
+        await saveHistory(name, formatTime(totalMs), totalSec);
+        
+        document.getElementById('taskName').value = "";
+        resetGlobalTimer();
+    };
+
+    document.getElementById('resetBtn').onclick = resetGlobalTimer;
+
+    // Cronômetro das Tarefas
+    window.startTaskTimer = (id) => {
+        if (activeTaskId && activeTaskId !== id) {
+            alert("Finalize a tarefa atual antes de iniciar outra.");
+            return;
+        }
+        
+        activeTaskId = id;
+        isRunning = true;
+        startTime = Date.now();
+        timerInterval = setInterval(updateDisplay, 100);
+        renderTasks();
+    };
+
+    window.finishTaskTimer = async (id, title) => {
+        const totalMs = accumulatedTime + (Date.now() - startTime);
+        const totalSec = Math.floor(totalMs / 1000);
+
+        if (totalSec < 2) {
+            alert("Tempo muito curto para salvar.");
+            resetGlobalTimer();
+            renderTasks();
+            return;
+        }
+
+        await saveHistory(`[Tarefa] ${title}`, formatTime(totalMs), totalSec);
+        resetGlobalTimer();
+        renderTasks();
+    };
+
+    async function saveHistory(name, durationText, rawSeconds) {
+        if (!supabase) return;
+        const { error } = await supabase.from('history').insert([{
+            user_id: sessionUser.id,
+            name: name,
+            duration_text: durationText,
+            raw_seconds: rawSeconds
+        }]);
+        if (!error) fetchData();
+    }
+
+    function renderHistory() {
+        document.getElementById('historyList').innerHTML = historyData.map(item => `
+            <div class="history-item">
+                <div>
+                    <div style="color: var(--accent)">${item.name}</div>
+                    <div style="font-size: 0.8rem; color: #555">${new Date(item.timestamp).toLocaleDateString()}</div>
+                </div>
+                <span style="color: var(--primary)">${item.duration_text}</span>
+            </div>
+        `).join('') || '<div style="padding:15px; text-align:center; color:#444">SEM LOGS</div>';
+    }
+
     function updateDashboard() {
         const now = new Date();
-        const monthly = historyData.filter(i => { const d = new Date(i.timestamp); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); });
+        const monthly = historyData.filter(i => {
+            const d = new Date(i.timestamp);
+            return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        });
         const totalSec = monthly.reduce((acc, curr) => acc + curr.raw_seconds, 0);
         document.getElementById('monthArts').innerText = monthly.length;
         document.getElementById('monthHours').innerText = (totalSec / 3600).toFixed(1) + 'h';
