@@ -97,12 +97,28 @@
         #loadingOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color);
             display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; font-size: 2rem; color: var(--primary);
+            text-align: center; padding: 20px;
+        }
+
+        .setup-warning {
+            color: var(--secondary);
+            font-size: 1.2rem;
+            margin-top: 20px;
+            border: 1px dashed var(--secondary);
+            padding: 15px;
+            background: rgba(0,0,0,0.5);
         }
     </style>
 </head>
 <body>
 
-<div id="loadingOverlay">INICIALIZANDO...</div>
+<div id="loadingOverlay">
+    <div>INICIALIZANDO SISTEMA...</div>
+    <div id="setupError" class="setup-warning" style="display: none;">
+        ERRO: CREDENCIAIS SUPABASE NÃO ENCONTRADAS!<br>
+        INSIRA A URL E A KEY NO SCRIPT PARA CONTINUAR.
+    </div>
+</div>
 
 <div id="authScreen" class="auth-container" style="display: none;">
     <div style="font-size: 2.5rem; text-align: center; color: var(--primary);">PIXEL LOGIN</div>
@@ -112,7 +128,7 @@
         <button class="pixel-btn btn-primary" style="flex: 1;" onclick="handleSignIn()">ENTRAR</button>
         <button class="pixel-btn btn-accent" style="flex: 1;" onclick="handleSignUp()">CADASTRAR</button>
     </div>
-    <div id="authMsg" style="text-align: center; color: var(--secondary); font-size: 0.9rem;"></div>
+    <div id="authMsg" style="text-align: center; color: var(--secondary); font-size: 0.9rem; min-height: 20px;"></div>
 </div>
 
 <div id="appScreen" class="app-wrapper">
@@ -170,10 +186,22 @@
 <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-    // INSIRA SUAS CHAVES AQUI
-    const SUPABASE_URL = '//vtiljgnjzaxlwevbmyue.supabase.co'; 
-    const SUPABASE_KEY = 'sb_publishable_B4-tZ53Tfx_t7rk4LAkZ5Q_3eD7DRIQ'; 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+    // INSIRA SUAS CHAVES DO SUPABASE AQUI
+    const SUPABASE_URL = ''; 
+    const SUPABASE_KEY = ''; 
+
+    let supabase = null;
+
+    // Inicialização protegida para evitar erro de execução caso as chaves estejam vazias
+    if (SUPABASE_URL && SUPABASE_KEY) {
+        try {
+            supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+        } catch (err) {
+            console.error("Erro ao inicializar Supabase:", err);
+        }
+    } else {
+        console.warn("Chaves do Supabase não configuradas.");
+    }
 
     let sessionUser = null;
     let startTime = 0;
@@ -184,12 +212,23 @@
     let tasksData = [];
 
     async function init() {
-        const { data: { session } } = await supabase.auth.getSession();
-        updateAuthUI(session?.user || null);
-        document.getElementById('loadingOverlay').style.display = 'none';
+        if (!supabase) {
+            document.getElementById('setupError').style.display = 'block';
+            return;
+        }
+
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            updateAuthUI(session?.user || null);
+            document.getElementById('loadingOverlay').style.display = 'none';
+        } catch (err) {
+            console.error("Erro na inicialização da sessão:", err);
+            document.getElementById('loadingOverlay').innerText = "ERRO DE CONEXÃO COM SUPABASE";
+        }
     }
 
     window.handleSignIn = async () => {
+        if (!supabase) return;
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -198,6 +237,7 @@
     };
 
     window.handleSignUp = async () => {
+        if (!supabase) return;
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
         const { error } = await supabase.auth.signUp({ email, password });
@@ -205,7 +245,11 @@
         else document.getElementById('authMsg').innerText = "Confirme seu e-mail!";
     };
 
-    window.handleLogout = async () => { await supabase.auth.signOut(); updateAuthUI(null); };
+    window.handleLogout = async () => { 
+        if (!supabase) return;
+        await supabase.auth.signOut(); 
+        updateAuthUI(null); 
+    };
 
     function updateAuthUI(user) {
         sessionUser = user;
@@ -221,7 +265,7 @@
     }
 
     async function fetchData() {
-        if (!sessionUser) return;
+        if (!supabase || !sessionUser) return;
         const hRes = await supabase.from('history').select('*').order('timestamp', { ascending: false });
         if (!hRes.error) { historyData = hRes.data; renderHistory(); updateDashboard(); }
         const tRes = await supabase.from('tasks').select('*').order('timestamp', { ascending: false });
@@ -236,6 +280,7 @@
     };
 
     window.addTask = async () => {
+        if (!supabase) return;
         const title = document.getElementById('newTaskTitle').value;
         const notes = document.getElementById('newTaskNotes').value;
         if (!title) return;
@@ -244,10 +289,12 @@
     };
 
     window.toggleTask = async (id, status) => {
+        if (!supabase) return;
         await supabase.from('tasks').update({ is_completed: !status }).eq('id', id); fetchData();
     };
 
     window.deleteTask = async (id) => {
+        if (!supabase) return;
         if (confirm("Deletar tarefa?")) { await supabase.from('tasks').delete().eq('id', id); fetchData(); }
     };
 
@@ -277,6 +324,7 @@
     };
 
     document.getElementById('finishBtn').onclick = async () => {
+        if (!supabase) return;
         const totalMs = isRunning ? (accumulatedTime + (Date.now() - startTime)) : accumulatedTime;
         const totalSec = Math.floor(totalMs / 1000);
         if (totalSec < 5) return;
